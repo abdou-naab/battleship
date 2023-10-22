@@ -84,7 +84,7 @@ describe("hiting a ship or sink it on the gameboard", () => {
     expect(board.isDefeated()).toBeFalsy();
     expect(board.casualties_coords.length).toBe(0);
   });
-  test.only("sink one ship without missing and left others", () => {
+  test("sink one ship without missing and left others", () => {
     let ship2 = Ship("myship-2", 3, "x");
     let shipAttacked;
     board.placeShip(ship2, [3, 3]);

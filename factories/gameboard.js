@@ -10,7 +10,7 @@ const Gameboard = () => {
   let casualties_coords = [];
 
   const isPlacingShipOk = (coords_to_fill) => {
-    return coords_to_fill.every((coords) => grid[coords[0]][coords[1]] == 0);
+    return coords_to_fill.every((coords) => grid[coords[1]][coords[0]] == 0);
   };
 
   const placeShip = (ship, [xCoord, yCoord]) => {
@@ -30,8 +30,9 @@ const Gameboard = () => {
       placesToFill--;
       ship.axis == "x" ? j++ : i++;
     }
-    ship.setShipLocation(coords_to_fill);
+
     if (isPlacingShipOk(coords_to_fill)) {
+      ship.setShipLocation(coords_to_fill);
       coords_to_fill.forEach(
         (coords) => (grid[coords[1]][coords[0]] = ship.name)
       );
