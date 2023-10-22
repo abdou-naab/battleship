@@ -7,6 +7,13 @@ const MISSED_ATTACK = -1;
 const { Ship } = require("./ship");
 const { Gameboard } = require("./gameboard");
 
+function coordsToString([i, j]) {
+  return `${i},${j}`;
+}
+function stringToCoords(temp) {
+  return [parseInt(temp.split(",")[0]), parseInt(temp.split(",")[1])];
+}
+
 const potentialTargets = (() => {
   let potential_targets = {
     0: [], // north
@@ -16,13 +23,19 @@ const potentialTargets = (() => {
   };
 
   const getCoords = (key) => {
-    return potentialTargets[key].shift();
+    return potential_targets[key].shift();
   };
   // Check if there is a target to hit
-  const hasTarget = () => {
+  const hasTarget = (gameboard) => {
     for (let key in potential_targets) {
-      if (potential_targets[key].length > 0) {
-        return key;
+      let coords = potential_targets[key][0];
+      if (coords) {
+        if (gameboard.grid[coords[1]][coords[0]] == MISSED_ATTACK) {
+          potential_targets[key] = [];
+        }
+        if (potential_targets[key].length > 0) {
+          return key;
+        }
       }
     }
     return null;
@@ -30,10 +43,12 @@ const potentialTargets = (() => {
 
   // Empty all other lists
   const emptyOthers = (key) => {
-    for (let k in potential_targets) {
-      if (k != key) {
-        potential_targets[k] = [];
-      }
+    if (key == "0" || key == "2") {
+      potential_targets["1"] = [];
+      potential_targets["3"] = [];
+    } else if (key == "1" || key == "3") {
+      potential_targets["0"] = [];
+      potential_targets["2"] = [];
     }
   };
   const emptyAll = () => {
@@ -52,29 +67,29 @@ const potentialTargets = (() => {
     let maxShipLenToSink = enemy.ships.reduce((max, ship) =>
       max.length > ship.length ? max : ship
     ).length;
-    let i1 = maxShipLenToSink;
-    let i2 = maxShipLenToSink;
-    let i3 = maxShipLenToSink;
-    let i4 = maxShipLenToSink;
-    while (yCoord - 1 >= 0 && i1 > 0) {
-      yCoord -= 1;
-      i1--;
-      potential_targets["0"].push([xCoord, yCoord]);
-    }
-    while (yCoord + 1 < 10 && i2 > 0) {
-      yCoord += 1;
-      i2--;
-      potential_targets["2"].push([xCoord, yCoord]);
-    }
-    while (xCoord - 1 >= 0 && i3 > 0) {
-      xCoord -= 1;
-      i3--;
-      potential_targets["3"].push([xCoord, yCoord]);
-    }
-    while (xCoord + 1 < 10 && i4 > 0) {
-      xCoord += 1;
-      i4--;
-      potential_targets["1"].push([xCoord, yCoord]);
+    maxShipLenToSink--; // to remove the point that was hit
+    let [xNorthRef, yNorthRef] = [xCoord, yCoord];
+    let [xSouthRef, ySouthRef] = [xCoord, yCoord];
+    let [xEastRef, yEastRef] = [xCoord, yCoord];
+    let [xWestRef, yWestRef] = [xCoord, yCoord];
+
+    for (i = 0; i < maxShipLenToSink; i++) {
+      if (yNorthRef - 1 >= 0) {
+        yNorthRef--;
+        potential_targets["0"].push([xNorthRef, yNorthRef]);
+      }
+      if (ySouthRef + 1 < 10) {
+        ySouthRef++;
+        potential_targets["2"].push([xSouthRef, ySouthRef]);
+      }
+      if (xEastRef + 1 < 10) {
+        xEastRef++;
+        potential_targets["1"].push([xEastRef, yEastRef]);
+      }
+      if (xWestRef - 1 >= 0) {
+        xWestRef--;
+        potential_targets["3"].push([xWestRef, yWestRef]);
+      }
     }
   };
   return {
@@ -84,6 +99,7 @@ const potentialTargets = (() => {
     predictNextMoves,
     getCoords,
     emptyAll,
+    potential_targets,
   };
 })();
 
@@ -91,8 +107,12 @@ const Player = (robot = false) => {
   const ships = [];
   const gameboard = Gameboard();
   let direction;
-  let xCoordsToAttack = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-  let yCoordsToAttack = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let availableCoords = [];
+  for (i = 0; i < GRID_SIZE; i++) {
+    for (j = 0; j < GRID_SIZE; j++) {
+      availableCoords.push(coordsToString([i, j]));
+    }
+  }
   const addShip = (ship) => {
     ships.push(ship);
   };
@@ -108,49 +128,51 @@ const Player = (robot = false) => {
     if (!enemy.ships.length) return;
     if (robot) {
       let coordsOk = false;
-      let xCoord =
-        xCoordsToAttack[Math.floor(Math.random() * xCoordsToAttack.length)];
-      let yCoord =
-        yCoordsToAttack[Math.floor(Math.random() * yCoordsToAttack.length)];
+      let coordsAsString =
+        availableCoords[Math.floor(Math.random() * availableCoords.length)];
+      let [xCoord, yCoord] = stringToCoords(coordsAsString);
+
       while (!coordsOk) {
-        direction = potentialTargets.hasTarget();
+        direction = potentialTargets.hasTarget(gameboard);
+
         if (direction) {
           [xCoord, yCoord] = potentialTargets.getCoords(direction);
         }
-        console.log(xCoordsToAttack);
-        console.log(yCoordsToAttack);
-        console.log(xCoord, yCoord);
-        coordsOk = gameboard.grid[yCoord][xCoord] == 0;
-        if (xCoordsToAttack.indexOf(xCoord) != -1)
-          xCoordsToAttack.splice(xCoordsToAttack.indexOf(xCoord), 1);
-        if (yCoordsToAttack.indexOf(yCoord) != -1)
-          yCoordsToAttack.splice(yCoordsToAttack.indexOf(yCoord), 1);
+        coordsOk = ![Enemy_Casualties, Enemy_Finished, MISSED_ATTACK].includes(
+          gameboard.grid[yCoord][xCoord]
+        );
+        availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
       }
 
       let hitSomething = gameboard.receiveAttack(xCoord, yCoord);
       if (!hitSomething) {
         if (direction) {
           potentialTargets.empty(direction);
+        }
+        return;
+      } else {
+        if (direction) {
           for (let ship of enemy.ships) {
             if (ship.name == hitSomething && ship.isSunk()) {
               potentialTargets.emptyAll();
               break;
             }
           }
-        }
-        return [xCoord, yCoord];
-      } else {
-        if (direction) {
           potentialTargets.emptyOthers(direction);
         } else {
-          potentialTargets.predictNextMoves(enemy);
+          potentialTargets.predictNextMoves([xCoord, yCoord], enemy);
         }
         return [xCoord, yCoord];
       }
     } else {
-      let hitSomething = gameboard.receiveAttack(...coords);
+      let coordsAsString = coordsToString([coords[0], coords[1]]);
+      if (availableCoords.includes(coordsAsString)) {
+        gameboard.receiveAttack(...coords);
+        availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
+        return [coords[0], coords[1]];
+      } else return;
     }
   };
-  return { attack, addShip, removeShip, ships };
+  return { attack, addShip, removeShip, ships, gameboard };
 };
 module.exports = { Player };

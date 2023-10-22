@@ -26,14 +26,14 @@ const Gameboard = () => {
     let j = xCoord;
     let coords_to_fill = [];
     while (placesToFill) {
-      coords_to_fill.push([i, j]);
+      coords_to_fill.push([j, i]);
       placesToFill--;
       ship.axis == "x" ? j++ : i++;
     }
     ship.setShipLocation(coords_to_fill);
     if (isPlacingShipOk(coords_to_fill)) {
       coords_to_fill.forEach(
-        (coords) => (grid[coords[0]][coords[1]] = ship.name)
+        (coords) => (grid[coords[1]][coords[0]] = ship.name)
       );
       return true;
     } else return false;

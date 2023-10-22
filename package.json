@@ -8,8 +8,17 @@
   },
   "scripts": {
     "test": "jest",
-    "watch": "jest --watch"
+    "watch": "jest --watch",
+    "webpack": "webpack",
+    "gh-pages": "git subtree push --prefix dist origin gh-pages",
+    "webpack-watch": "npx webpack --watch"
   },
   "author": "abderrhmane naab",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
 }
