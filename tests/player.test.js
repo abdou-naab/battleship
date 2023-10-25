@@ -8,6 +8,13 @@ const {
 } = require("../factories/gameboard");
 const { Ship } = require("../factories/ship");
 
+describe("robot can place ships", () => {
+  test("displaying the robot ships ", () => {
+    let bot = Player((robot = true));
+    bot.botPlaceShips();
+    console.table(bot.gameboard.grid);
+  });
+});
 describe("Potential Target ai", () => {
   test("can know the moves of 4 directions", () => {
     let enemy = Player((robot = true));

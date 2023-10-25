@@ -9,33 +9,31 @@ const Gameboard = () => {
 
   let casualties_coords = [];
 
-  const isPlacingShipOk = (coords_to_fill) => {
-    return coords_to_fill.every((coords) => grid[coords[1]][coords[0]] == 0);
-  };
-
-  const placeShip = (ship, [xCoord, yCoord]) => {
+  const isPlacingShipOk = (ship, [xCoord, yCoord]) => {
     let placesToFill = ship.length;
     if (
       (xCoord + placesToFill - 1 >= GRID_SIZE && ship.axis == "x") ||
       (yCoord + placesToFill - 1 >= GRID_SIZE && ship.axis == "y")
     )
-      return undefined;
-
-    if (!shipsRegistry[ship.name]) shipsRegistry[ship.name] = ship;
-    let i = yCoord;
-    let j = xCoord;
+      return false;
+    let [i, j] = [yCoord, xCoord];
     let coords_to_fill = [];
     while (placesToFill) {
       coords_to_fill.push([j, i]);
       placesToFill--;
       ship.axis == "x" ? j++ : i++;
     }
+    if (coords_to_fill.every((coords) => grid[coords[1]][coords[0]] == 0))
+      return coords_to_fill;
+    else return false;
+  };
 
-    if (isPlacingShipOk(coords_to_fill)) {
-      ship.setShipLocation(coords_to_fill);
-      coords_to_fill.forEach(
-        (coords) => (grid[coords[1]][coords[0]] = ship.name)
-      );
+  const placeShip = (ship, [xCoord, yCoord]) => {
+    let shipPlace = isPlacingShipOk(ship, [xCoord, yCoord]);
+    if (shipPlace) {
+      if (!shipsRegistry[ship.name]) shipsRegistry[ship.name] = ship;
+      ship.setShipLocation(shipPlace);
+      shipPlace.forEach((coords) => (grid[coords[1]][coords[0]] = ship.name));
       return true;
     } else return false;
   };
@@ -75,6 +73,7 @@ const Gameboard = () => {
     placeShip,
     receiveAttack,
     isDefeated,
+    isPlacingShipOk,
     grid,
     casualties_coords,
   };

@@ -118,12 +118,40 @@ const Player = (robot = false) => {
   };
   const removeShip = (ship) => {
     for (i = 0; i < ships.length; i++) {
-      if (ships[i].name == ship.name) {
+      if (ships[i].name == ship || ships[i].name == ship.name) {
         ships.splice(i, 1);
       }
     }
   };
+  let botPlaceShips;
+  if (robot) {
+    botPlaceShips = () => {
+      let axis = ["x", "y"];
+      const Carrier = Ship("Carrier", 5, "x");
+      const Battleship = Ship("Battleship", 4, "x");
+      const Destroyer = Ship("Destroyer", 3, "x");
+      const Submarine = Ship("Submarine", 3, "x");
+      const PatrolBoat = Ship("Patrol Boat", 2, "x");
+      const game_ships = [
+        Carrier,
+        Battleship,
+        Destroyer,
+        Submarine,
+        PatrolBoat,
+      ];
+      for (i = 0; i < game_ships.length; i++) {
+        let coordsOk = false;
 
+        while (!coordsOk) {
+          let x = Math.floor(Math.random() * 10);
+          let y = Math.floor(Math.random() * 10);
+          game_ships[i].axis = axis[Math.floor(Math.random() * 2)];
+          coordsOk = gameboard.placeShip(game_ships[i], [x, y]);
+          if (coordsOk) addShip(game_ships[i]);
+        }
+      }
+    };
+  }
   const attack = (gameboard, enemy, coords = [0, 0]) => {
     if (!enemy.ships.length) return;
     if (robot) {
@@ -155,6 +183,7 @@ const Player = (robot = false) => {
           for (let ship of enemy.ships) {
             if (ship.name == hitSomething && ship.isSunk()) {
               potentialTargets.emptyAll();
+              enemy.removeShip(hitSomething);
               break;
             }
           }
@@ -167,12 +196,18 @@ const Player = (robot = false) => {
     } else {
       let coordsAsString = coordsToString([coords[0], coords[1]]);
       if (availableCoords.includes(coordsAsString)) {
-        gameboard.receiveAttack(...coords);
+        let hitSomething = gameboard.receiveAttack(...coords);
+        if (hitSomething)
+          for (let ship of enemy.ships) {
+            if (ship.name == hitSomething && ship.isSunk()) {
+              enemy.removeShip(hitSomething);
+            }
+          }
         availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
         return [coords[0], coords[1]];
       } else return;
     }
   };
-  return { attack, addShip, removeShip, ships, gameboard };
+  return { attack, addShip, removeShip, botPlaceShips, ships, gameboard };
 };
-module.exports = { Player };
+module.exports = { Player, coordsToString, stringToCoords };
