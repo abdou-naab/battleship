@@ -113,6 +113,7 @@ const Player = (robot = false) => {
       availableCoords.push(coordsToString([i, j]));
     }
   }
+  let already_hit = {};
   const addShip = (ship) => {
     ships.push(ship);
   };
@@ -165,47 +166,75 @@ const Player = (robot = false) => {
 
         if (direction) {
           [xCoord, yCoord] = potentialTargets.getCoords(direction);
+          coordsAsString = coordsToString([xCoord, yCoord]);
         }
         coordsOk = ![Enemy_Casualties, Enemy_Finished, MISSED_ATTACK].includes(
           gameboard.grid[yCoord][xCoord]
         );
-        availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
       }
-
+      let del = availableCoords.splice(
+        availableCoords.indexOf(coordsAsString),
+        1
+      );
+      console.log(del + "   just deleted from bot's availableCoords");
       let hitSomething = gameboard.receiveAttack(xCoord, yCoord);
       if (!hitSomething) {
         if (direction) {
           potentialTargets.empty(direction);
+        } else {
+          for (let ship of enemy.ships) {
+            if (already_hit[ship.name] && !ship.isSunk()) {
+              console.log(
+                `%c searching for the place that we hit ${
+                  already_hit[ship.name]
+                }`,
+                "font-weight: bold"
+              );
+              // TODO : get the coords
+              potentialTargets.predictNextMoves(already_hit[ship.name], enemy);
+              console.log("predicting next move of my scenario");
+              console.log(potentialTargets.potential_targets);
+              break;
+            }
+          }
         }
-        return;
+        return { hit: false, coords: [xCoord, yCoord] };
       } else {
+        if (!already_hit[hitSomething]) {
+          already_hit[hitSomething] = [xCoord, yCoord];
+        }
         if (direction) {
+          console.log("we hit something again");
+          potentialTargets.emptyOthers(direction);
           for (let ship of enemy.ships) {
             if (ship.name == hitSomething && ship.isSunk()) {
-              potentialTargets.emptyAll();
               enemy.removeShip(hitSomething);
               break;
             }
           }
-          potentialTargets.emptyOthers(direction);
+          // potentialTargets.emptyOthers(direction);
         } else {
           potentialTargets.predictNextMoves([xCoord, yCoord], enemy);
+          console.log("woow we hit some");
+          console.log(potentialTargets.potential_targets);
         }
-        return [xCoord, yCoord];
+        return { hit: true, coords: [xCoord, yCoord] };
       }
     } else {
-      let coordsAsString = coordsToString([coords[0], coords[1]]);
+      let coordsAsString = coordsToString(coords);
       if (availableCoords.includes(coordsAsString)) {
+        availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
+
         let hitSomething = gameboard.receiveAttack(...coords);
-        if (hitSomething)
+        if (hitSomething) {
           for (let ship of enemy.ships) {
             if (ship.name == hitSomething && ship.isSunk()) {
               enemy.removeShip(hitSomething);
             }
           }
-        availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
-        return [coords[0], coords[1]];
-      } else return;
+          return { hit: true, coords: coords };
+        } else return { hit: false, coords: coords };
+      }
     }
   };
   return { attack, addShip, removeShip, botPlaceShips, ships, gameboard };

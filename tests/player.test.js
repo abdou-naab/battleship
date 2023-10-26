@@ -29,7 +29,7 @@ describe("Potential Target ai", () => {
     let found = false;
 
     while (!found) {
-      coords = me.attack(enemy_board, enemy);
+      coords = me.attack(enemy_board, enemy).coords;
       let hitSomething;
       if (coords) hitSomething = enemy_board.grid[coords[1]][coords[0]];
       if (hitSomething == 1) {
@@ -40,7 +40,7 @@ describe("Potential Target ai", () => {
 
     found = false;
     while (!found) {
-      coords = me.attack(enemy_board, enemy);
+      coords = me.attack(enemy_board, enemy).coords;
       let hitSomething;
       if (coords) hitSomething = enemy_board.grid[coords[1]][coords[0]];
       if (hitSomething == 1) {
@@ -50,7 +50,7 @@ describe("Potential Target ai", () => {
     }
     found = false;
     while (!found) {
-      coords = me.attack(enemy_board, enemy);
+      coords = me.attack(enemy_board, enemy).coords;
       let hitSomething;
       if (coords) hitSomething = enemy_board.grid[coords[1]][coords[0]];
       if (hitSomething == 2) {
@@ -68,8 +68,8 @@ describe("Potential Target ai", () => {
     let enemy_board = enemy.gameboard;
     enemy_board.placeShip(ship1, [1, 3]);
 
-    me.attack(enemy_board, enemy, [8, 8]);
-    expect(ship1.isSunk()).toBeFalsy();
+    let attack_results = me.attack(enemy_board, enemy, [8, 8]).hit;
+    expect(attack_results).toBeFalsy();
     me.attack(enemy_board, enemy, [1, 3]);
     expect(enemy_board.grid[3][1]).toBe(1);
     expect(ship1.isSunk()).toBeFalsy();

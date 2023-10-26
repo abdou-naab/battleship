@@ -2,7 +2,7 @@ const GRID_SIZE = 10;
 const { coordsToString, stringToCoords } = require("../factories/player");
 const startingGame = new CustomEvent("startingGame");
 
-const buildGrid = (myGB, grid = null) => {
+const buildGrid = (myGB, grid = null, show_ships = false) => {
   if (myGB)
     for (let i = 0; i < GRID_SIZE; i++) {
       for (let j = 0; j < GRID_SIZE; j++) {
@@ -10,9 +10,11 @@ const buildGrid = (myGB, grid = null) => {
         div.classList.add("cell");
         div.setAttribute("coords", `${j},${i}`);
 
-        grid
-          ? div.setAttribute("value", grid[i][j])
-          : div.setAttribute("value", "0");
+        if (grid) {
+          let val = grid[i][j];
+          div.setAttribute("value", val);
+          if (show_ships && val != 0) div.classList.add("ship_placed2");
+        } else div.setAttribute("value", "0");
         myGB.append(div);
       }
     }
@@ -68,6 +70,7 @@ const clickOnCell = (cell, me, game_ships, ship_name) => {
       let ship = game_ships.shift();
       const coords = stringToCoords(cell.getAttribute("coords"));
       me.gameboard.placeShip(ship, coords);
+      me.addShip(ship);
       let preview_cells = document.querySelectorAll(".preview");
       preview_cells.forEach((c) => {
         c.classList.remove("preview");

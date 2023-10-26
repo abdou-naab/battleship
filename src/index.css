@@ -6,6 +6,9 @@ h2 {
   --board-size: 10;
   --blue: #00003e;
   --shadow: #858599;
+  --blue2: #89cff3;
+  --blue3: #636379;
+  --cell-size: max(1.5rem, 2.9vw, 2.9vh);
 }
 body {
   height: 100vh;
@@ -31,12 +34,16 @@ body {
 }
 .gameboard {
   display: grid;
-  grid-template-columns: repeat(10, max(1.5rem, 2.9vw, 2.9vh));
-  grid-template-rows: repeat(10, max(1.5rem, 2.9vw, 2.9vh));
+  grid-template-columns: repeat(10, var(--cell-size));
+  grid-template-rows: repeat(10, var(--cell-size));
 }
 .gameboard > div {
   border: 2px solid white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 .place-ships-container button {
   font-size: 1.2rem;
   padding: 0.4em 1.2em;
@@ -73,4 +80,13 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   gap: max(3rem, 5vw);
+}
+.ship_placed2 {
+  background-color: var(--blue2);
+}
+.ship_placed3 {
+  background-color: var(--blue3);
+}
+.commentary {
+  height: max(15vh, 7rem);
 }
