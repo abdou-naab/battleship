@@ -8,6 +8,7 @@ h2 {
   --shadow: #858599;
   --blue2: #89cff3;
   --blue3: #636379;
+  --blue4: rgb(177, 26, 56);
   --cell-size: max(1.5rem, 2.9vw, 2.9vh);
 }
 body {
@@ -44,7 +45,7 @@ body {
   align-items: center;
 }
 
-.place-ships-container button {
+button {
   font-size: 1.2rem;
   padding: 0.4em 1.2em;
   border-radius: 6px;
@@ -83,10 +84,19 @@ body {
 }
 .ship_placed2 {
   background-color: var(--blue2);
+  cursor: not-allowed;
 }
 .ship_placed3 {
+  cursor: not-allowed;
   background-color: var(--blue3);
+}
+.ship_placed4 {
+  cursor: not-allowed;
+  background-color: var(--blue4);
 }
 .commentary {
   height: max(15vh, 7rem);
+}
+.comment {
+  font-size: 1.3rem;
 }

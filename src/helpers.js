@@ -13,6 +13,7 @@ const buildGrid = (myGB, grid = null, show_ships = false) => {
         if (grid) {
           let val = grid[i][j];
           div.setAttribute("value", val);
+          div.setAttribute("empty", "");
           if (show_ships && val != 0) div.classList.add("ship_placed2");
         } else div.setAttribute("value", "0");
         myGB.append(div);
