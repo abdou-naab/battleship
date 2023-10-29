@@ -14,6 +14,7 @@ const {
   stringToCoords,
 } = require("../factories/player");
 const {
+  addShipImages,
   hoverOnBotGridEffect,
   Sound,
   animateAttack,
@@ -72,7 +73,7 @@ document.addEventListener("startingGame", function () {
   const robot_board = document.querySelector(".robot-board");
   buildGrid(player_board, me.gameboard.grid, true);
   buildGrid(robot_board, bot.gameboard.grid);
-
+  addShipImages();
   hoverOnBotGridEffect([...robot_board.children]);
 
   let isPlayerTurn = true;

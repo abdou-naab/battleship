@@ -2,6 +2,23 @@ const GRID_SIZE = 10;
 const { coordsToString, stringToCoords } = require("../factories/player");
 const startingGame = new CustomEvent("startingGame");
 
+const Carrier_0 = require("../src/images/Battleship-0.png");
+const Carrier_1 = require("../src/images/Battleship-1.png");
+const Carrier_2 = require("../src/images/Battleship-2.png");
+const Carrier_3 = require("../src/images/Battleship-3.png");
+const Carrier_4 = require("../src/images/Battleship-4.png");
+const Battleship_0 = require("../src/images/Carrier-0.png");
+const Battleship_1 = require("../src/images/Carrier-1.png");
+const Battleship_2 = require("../src/images/Carrier-2.png");
+const Battleship_3 = require("../src/images/Carrier-3.png");
+const Destroyer_0 = require("../src/images/Destroyer-0.png");
+const Destroyer_1 = require("../src/images/Destroyer-1.png");
+const Destroyer_2 = require("../src/images/Destroyer-2.png");
+const Submarine_0 = require("../src/images/Submarine-0.png");
+const Submarine_1 = require("../src/images/Submarine-1.png");
+const Submarine_2 = require("../src/images/Submarine-2.png");
+const Patrol_Boat_0 = require("../src/images/Patrol_Boat-0.png");
+const Patrol_Boat_1 = require("../src/images/Patrol_Boat-1.png");
 const buildGrid = (myGB, grid = null, show_ships = false) => {
   if (myGB)
     for (let i = 0; i < GRID_SIZE; i++) {
@@ -152,7 +169,44 @@ const animateHitOnShip = (ship_name, ship_owner, n) => {
     "filter: invert(31%) sepia(53%) saturate(6071%) hue-rotate(0deg) brightness(86%) contrast(175%);";
 };
 
+const addShipImages = () => {
+  let s1 = document.querySelectorAll('div[ship="Carrier"]');
+  let s2 = document.querySelectorAll('div[ship="Battleship"]');
+  let s3 = document.querySelectorAll('div[ship="Destroyer"]');
+  let s4 = document.querySelectorAll('div[ship="Submarine"]');
+  let s5 = document.querySelectorAll('div[ship="Patrol Boat"]');
+
+  for (let e of s1) {
+    e.children[0].setAttribute("src", Carrier_0);
+    e.children[1].setAttribute("src", Carrier_1);
+    e.children[2].setAttribute("src", Carrier_2);
+    e.children[3].setAttribute("src", Carrier_3);
+    e.children[4].setAttribute("src", Carrier_4);
+  }
+  for (let e of s2) {
+    e.children[0].setAttribute("src", Battleship_0);
+    e.children[1].setAttribute("src", Battleship_1);
+    e.children[2].setAttribute("src", Battleship_2);
+    e.children[3].setAttribute("src", Battleship_3);
+  }
+  for (let e of s3) {
+    e.children[0].setAttribute("src", Destroyer_0);
+    e.children[1].setAttribute("src", Destroyer_1);
+    e.children[2].setAttribute("src", Destroyer_2);
+  }
+  for (let e of s4) {
+    e.children[0].setAttribute("src", Submarine_0);
+    e.children[1].setAttribute("src", Submarine_1);
+    e.children[2].setAttribute("src", Submarine_2);
+  }
+  for (let e of s5) {
+    e.children[0].setAttribute("src", Patrol_Boat_0);
+    e.children[1].setAttribute("src", Patrol_Boat_1);
+  }
+};
+
 module.exports = {
+  addShipImages,
   hoverOnBotGridEffect,
   Sound,
   sleep,
