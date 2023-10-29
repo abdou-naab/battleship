@@ -14,12 +14,17 @@ const {
   stringToCoords,
 } = require("../factories/player");
 const {
+  hoverOnBotGridEffect,
+  Sound,
+  animateAttack,
+  sleep,
   buildGrid,
   axisButtonListener,
   getAxis,
   cursorEntersCell,
   cursorLeavesCell,
   clickOnCell,
+  animateHitOnShip,
 } = require("./helpers");
 
 const GRID_SIZE = 10;
@@ -58,35 +63,6 @@ const placeShipOnGUI = (myGB, me) => {
 };
 placeShipOnGUI(myGB, me);
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-function animateAttack(result, cell) {
-  cell.removeAttribute("empty");
-  let div = document.createElement("div");
-  div.style.borderRadius = "50%";
-  if (result.hit) {
-    div.style.border = "calc(var(--cell-size) / 5) solid red";
-    cell.classList.add("ship_placed3");
-  } else {
-    div.style.border = "calc(var(--cell-size) / 5) solid white";
-  }
-  cell.append(div);
-}
-
-const Sound = (src) => {
-  let sound = document.createElement("audio");
-  sound.src = src;
-  sound.setAttribute("preload", "auto");
-  sound.setAttribute("controls", "none");
-  sound.style.display = "none";
-  document.body.appendChild(sound);
-  const play = () => {
-    sound.currentTime = 0;
-    sound.play();
-  };
-  return { play };
-};
 const shot_sound = Sound(shot);
 const fall_sound = Sound(fall);
 const explosion_sound = Sound(explosion);
@@ -96,17 +72,9 @@ document.addEventListener("startingGame", function () {
   const robot_board = document.querySelector(".robot-board");
   buildGrid(player_board, me.gameboard.grid, true);
   buildGrid(robot_board, bot.gameboard.grid);
-  [...robot_board.children].forEach((cell) => {
-    cell.addEventListener("mouseenter", () => {
-      if (!cell.children.length && !cell.classList.contains("ship_placed4"))
-        cell.style.backgroundColor = "green";
-    });
-    cell.addEventListener("mouseleave", () => {
-      if (!cell.classList.contains("ship_placed4"))
-        cell.style.backgroundColor = "";
-    });
-  });
-  console.table(bot.gameboard.grid);
+
+  hoverOnBotGridEffect([...robot_board.children]);
+
   let isPlayerTurn = true;
   turn.innerHTML = "It's your turn";
 
@@ -123,12 +91,14 @@ document.addEventListener("startingGame", function () {
       isPlayerTurn = false;
       let cell = e.target;
       cell.style.backgroundColor = "";
+
       if (cell.getAttribute("empty") == null) {
         isPlayerTurn = true;
         return;
       }
 
       let coords = stringToCoords(cell.getAttribute("coords"));
+
       let result = me.attack(bot.gameboard, bot, coords);
       shot_sound.play();
       await sleep(2000);
@@ -136,6 +106,8 @@ document.addEventListener("startingGame", function () {
       animateAttack(result, cell);
       if (result.hit) {
         explosion_sound.play();
+        console.log(result);
+        animateHitOnShip(result.ship_name, "robot", result.hit_number);
         let [x, y] = result.coords;
         if (bot.gameboard.grid[y][x] == Enemy_Casualties)
           comment.innerHTML = `You Hit the bot's ${cell.getAttribute("value")}`;
@@ -151,7 +123,7 @@ document.addEventListener("startingGame", function () {
           });
         }
         if (bot.gameboard.isDefeated()) {
-          comment.innerHTML = "You WIN";
+          comment.innerHTML = "YOU WIN";
           turn.innerHTML = "";
           return;
         }
@@ -173,6 +145,8 @@ document.addEventListener("startingGame", function () {
       animateAttack(result, cell);
       if (result.hit) {
         explosion_sound.play();
+        console.log(result);
+        animateHitOnShip(result.ship_name, "player", result.hit_number);
         let [x, y] = result.coords;
         if (me.gameboard.grid[y][x] == Enemy_Casualties)
           comment.innerHTML = `Bot Hit your ${cell.getAttribute("value")}`;

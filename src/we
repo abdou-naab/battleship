@@ -1,0 +1,10 @@
+nrml :
+
+mix-blend-mode: plus-lighter;
+filter: invert(100%) sepia(0%) saturate(7443%) hue-rotate(273deg) brightness(97%) contrast(100%);
+
+_________
+
+red:
+
+filter: invert(31%) sepia(53%) saturate(6071%) hue-rotate(0deg) brightness(86%) contrast(175%);

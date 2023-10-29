@@ -21,7 +21,8 @@ const potentialTargets = (() => {
     2: [], // south
     3: [], // west
   };
-
+  let ships_found_potential_targets = [];
+  let last_ship_attacked = "";
   const getCoords = (key) => {
     return potential_targets[key].shift();
   };
@@ -30,7 +31,11 @@ const potentialTargets = (() => {
     for (let key in potential_targets) {
       let coords = potential_targets[key][0];
       if (coords) {
-        if (gameboard.grid[coords[1]][coords[0]] == MISSED_ATTACK) {
+        if (
+          [MISSED_ATTACK, Enemy_Finished, Enemy_Casualties].includes(
+            gameboard.grid[coords[1]][coords[0]]
+          )
+        ) {
           potential_targets[key] = [];
         }
         if (potential_targets[key].length > 0) {
@@ -63,7 +68,20 @@ const potentialTargets = (() => {
       }
     }
   };
-  const predictNextMoves = ([xCoord, yCoord], enemy) => {
+  const onRampage = () => {
+    if (ships_found_potential_targets.length) {
+      let new_potential_targets = ships_found_potential_targets.shift();
+      for (let direction in new_potential_targets) {
+        potential_targets[direction] = new_potential_targets[direction];
+      }
+    }
+  };
+  const predictNextMoves = ([xCoord, yCoord], enemy, for_later = false) => {
+    let targets;
+    if (for_later) {
+      targets = { 0: [], 1: [], 2: [], 3: [] };
+    }
+
     let maxShipLenToSink = enemy.ships.reduce((max, ship) =>
       max.length > ship.length ? max : ship
     ).length;
@@ -76,21 +94,26 @@ const potentialTargets = (() => {
     for (i = 0; i < maxShipLenToSink; i++) {
       if (yNorthRef - 1 >= 0) {
         yNorthRef--;
-        potential_targets["0"].push([xNorthRef, yNorthRef]);
+        if (for_later) targets["0"].push([xNorthRef, yNorthRef]);
+        else potential_targets["0"].push([xNorthRef, yNorthRef]);
       }
       if (ySouthRef + 1 < 10) {
         ySouthRef++;
-        potential_targets["2"].push([xSouthRef, ySouthRef]);
+        if (for_later) targets["2"].push([xSouthRef, ySouthRef]);
+        else potential_targets["2"].push([xSouthRef, ySouthRef]);
       }
       if (xEastRef + 1 < 10) {
         xEastRef++;
-        potential_targets["1"].push([xEastRef, yEastRef]);
+        if (for_later) targets["1"].push([xEastRef, yEastRef]);
+        else potential_targets["1"].push([xEastRef, yEastRef]);
       }
       if (xWestRef - 1 >= 0) {
         xWestRef--;
-        potential_targets["3"].push([xWestRef, yWestRef]);
+        if (for_later) targets["3"].push([xWestRef, yWestRef]);
+        else potential_targets["3"].push([xWestRef, yWestRef]);
       }
     }
+    if (for_later) ships_found_potential_targets.push(targets);
   };
   return {
     hasTarget,
@@ -99,7 +122,10 @@ const potentialTargets = (() => {
     predictNextMoves,
     getCoords,
     emptyAll,
+    onRampage,
     potential_targets,
+    ships_found_potential_targets,
+    last_ship_attacked,
   };
 })();
 
@@ -108,12 +134,12 @@ const Player = (robot = false) => {
   const gameboard = Gameboard();
   let direction;
   let availableCoords = [];
+  let already_hit = {};
   for (i = 0; i < GRID_SIZE; i++) {
     for (j = 0; j < GRID_SIZE; j++) {
       availableCoords.push(coordsToString([i, j]));
     }
   }
-  let already_hit = {};
   const addShip = (ship) => {
     ships.push(ship);
   };
@@ -156,83 +182,149 @@ const Player = (robot = false) => {
   const attack = (gameboard, enemy, coords = [0, 0]) => {
     if (!enemy.ships.length) return;
     if (robot) {
-      let coordsOk = false;
-      let coordsAsString =
-        availableCoords[Math.floor(Math.random() * availableCoords.length)];
-      let [xCoord, yCoord] = stringToCoords(coordsAsString);
-
-      while (!coordsOk) {
-        direction = potentialTargets.hasTarget(gameboard);
-
-        if (direction) {
-          [xCoord, yCoord] = potentialTargets.getCoords(direction);
-          coordsAsString = coordsToString([xCoord, yCoord]);
+      let xCoord, yCoord;
+      let coordsAsString;
+      direction = potentialTargets.hasTarget(gameboard);
+      console.log("direction :  " + direction);
+      console.log("potentialTargets :  ");
+      console.log(potentialTargets.potential_targets);
+      if (direction) {
+        [xCoord, yCoord] = potentialTargets.getCoords(direction);
+        coordsAsString = coordsToString([xCoord, yCoord]);
+      } else {
+        coordsAsString =
+          availableCoords[Math.floor(Math.random() * availableCoords.length)];
+        [xCoord, yCoord] = stringToCoords(coordsAsString);
+        let coordsOk = false;
+        while (!coordsOk) {
+          direction = potentialTargets.hasTarget(gameboard);
+          coordsOk = ![
+            Enemy_Casualties,
+            Enemy_Finished,
+            MISSED_ATTACK,
+          ].includes(gameboard.grid[yCoord][xCoord]);
         }
-        coordsOk = ![Enemy_Casualties, Enemy_Finished, MISSED_ATTACK].includes(
-          gameboard.grid[yCoord][xCoord]
-        );
       }
       let del = availableCoords.splice(
         availableCoords.indexOf(coordsAsString),
         1
       );
       console.log(del + "   just deleted from bot's availableCoords");
-      let hitSomething = gameboard.receiveAttack(xCoord, yCoord);
-      if (!hitSomething) {
-        if (direction) {
-          potentialTargets.empty(direction);
-        } else {
-          for (let ship of enemy.ships) {
-            if (already_hit[ship.name] && !ship.isSunk()) {
-              console.log(
-                `%c searching for the place that we hit ${
-                  already_hit[ship.name]
-                }`,
-                "font-weight: bold"
-              );
-              // TODO : get the coords
-              potentialTargets.predictNextMoves(already_hit[ship.name], enemy);
-              console.log("predicting next move of my scenario");
-              console.log(potentialTargets.potential_targets);
-              break;
-            }
+
+      let hit = gameboard.receiveAttack(xCoord, yCoord);
+
+      if (hit) {
+        let hit_number;
+        for (let ship of enemy.ships) {
+          if (ship.name == hit) {
+            hit_number = ship.getNumHits();
           }
         }
-        return { hit: false, coords: [xCoord, yCoord] };
-      } else {
-        if (!already_hit[hitSomething]) {
-          already_hit[hitSomething] = [xCoord, yCoord];
+        console.log(
+          `%c --------Attention, a hit at ${xCoord}, ${yCoord}----------`,
+          "font-size:1.2rem;"
+        );
+        if (!already_hit[hit]) {
+          already_hit[hit] = [xCoord, yCoord];
         }
+        console.log(`%c --------already_hit list :----------`);
+        console.log(already_hit);
         if (direction) {
-          console.log("we hit something again");
-          potentialTargets.emptyOthers(direction);
-          for (let ship of enemy.ships) {
-            if (ship.name == hitSomething && ship.isSunk()) {
-              enemy.removeShip(hitSomething);
-              break;
+          console.log(`%c ---------- current direction : ----------`);
+          console.log(direction);
+          if (hit == potentialTargets.last_ship_attacked) {
+            console.log(
+              `hit == potentialTargets.last_ship_attacked: ${
+                hit == potentialTargets.last_ship_attacked
+              }`
+            );
+            potentialTargets.emptyOthers(direction);
+            console.log(`potentialTargets : `);
+            console.log(potentialTargets.potential_targets);
+            for (let ship of enemy.ships) {
+              if (ship.name == hit && ship.isSunk()) {
+                console.log("ship is sunk : ");
+                enemy.removeShip(hit);
+                delete already_hit[hit];
+                potentialTargets.emptyAll();
+
+                console.log("stored targets");
+                console.log(potentialTargets.ships_found_potential_targets);
+                console.log("ship is sunk, but there is more : ");
+                potentialTargets.onRampage();
+                console.log(`potentialTargets : `);
+                console.log(potentialTargets.potential_targets);
+                break;
+              }
+            }
+          } else {
+            // another ship found
+            for (let ship of enemy.ships) {
+              if (ship.name == hit) {
+                if (ship.getNumHits() <= 1) {
+                  potentialTargets.predictNextMoves(
+                    already_hit[potentialTargets.last_ship_attacked],
+                    enemy,
+                    true
+                  );
+                  console.log(
+                    "%cships_found_potential_targets : ",
+                    "font-size: 0.9rem;"
+                  );
+                  console.log(potentialTargets.ships_found_potential_targets);
+                  potentialTargets.emptyAll();
+                  potentialTargets.predictNextMoves([xCoord, yCoord], enemy);
+                  console.log(`new ship descovered at : ` + [xCoord, yCoord]);
+                  console.log(`new potentialTargets : `);
+                  console.log(potentialTargets.potential_targets);
+                }
+                break;
+              }
             }
           }
-          // potentialTargets.emptyOthers(direction);
         } else {
           potentialTargets.predictNextMoves([xCoord, yCoord], enemy);
-          console.log("woow we hit some");
-          console.log(potentialTargets.potential_targets);
         }
-        return { hit: true, coords: [xCoord, yCoord] };
+        potentialTargets.last_ship_attacked = hit;
+        return {
+          hit: true,
+          coords: [xCoord, yCoord],
+          ship_name: hit,
+          hit_number: hit_number,
+        };
+      } else {
+        if (direction) {
+          potentialTargets.empty(direction);
+        }
+        return { hit: false, coords: [xCoord, yCoord] };
       }
     } else {
       let coordsAsString = coordsToString(coords);
       if (availableCoords.includes(coordsAsString)) {
         availableCoords.splice(availableCoords.indexOf(coordsAsString), 1);
 
-        let hitSomething = gameboard.receiveAttack(...coords);
-        if (hitSomething) {
+        let hit = gameboard.receiveAttack(...coords);
+        if (hit) {
+          let hit_number;
           for (let ship of enemy.ships) {
-            if (ship.name == hitSomething && ship.isSunk()) {
-              enemy.removeShip(hitSomething);
+            if (ship.name == hit) {
+              hit_number = ship.getNumHits();
             }
           }
-          return { hit: true, coords: coords };
+          for (let ship of enemy.ships) {
+            if (ship.name == hit) {
+              hit_number = ship.getNumHits();
+              if (ship.isSunk()) {
+                enemy.removeShip(hit);
+              }
+            }
+          }
+          return {
+            hit: true,
+            coords: coords,
+            ship_name: hit,
+            hit_number: hit_number,
+          };
         } else return { hit: false, coords: coords };
       }
     }

@@ -24,12 +24,13 @@ body {
 /* place my ships at the end of the game  */
 .main-display {
   padding: 1rem 0;
-  padding-bottom: max(4rem, 10vh);
+  padding-bottom: 8px;
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 1.2rem;
   background-color: var(--blue);
   color: whitesmoke;
 }
@@ -95,8 +96,31 @@ button {
   background-color: var(--blue4);
 }
 .commentary {
-  height: max(15vh, 7rem);
+  height: max(12vh, 5rem);
+  z-index: 2;
 }
 .comment {
   font-size: 1.3rem;
+}
+
+.flex-adj {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+.ships-imgs {
+  display: grid;
+  grid-template-rows: repeat(5, calc(var(--cell-size) * 2));
+}
+.ships-imgs > div {
+  display: grid;
+  grid-template-columns: repeat(5, calc(var(--cell-size)));
+}
+.ships-imgs img {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  mix-blend-mode: plus-lighter;
+  filter: invert(100%) sepia(0%) saturate(7443%) hue-rotate(273deg)
+    brightness(97%) contrast(100%);
 }

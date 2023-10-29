@@ -95,11 +95,73 @@ const clickOnCell = (cell, me, game_ships, ship_name) => {
   });
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+function animateAttack(result, cell) {
+  cell.removeAttribute("empty");
+  let div = document.createElement("div");
+  div.style.borderRadius = "50%";
+  if (result.hit) {
+    div.style.border = "calc(var(--cell-size) / 5) solid red";
+    cell.classList.add("ship_placed3");
+  } else {
+    div.style.border = "calc(var(--cell-size) / 5) solid white";
+  }
+  cell.append(div);
+}
+const Sound = (src) => {
+  let sound = document.createElement("audio");
+  sound.src = src;
+  sound.setAttribute("preload", "auto");
+  sound.setAttribute("controls", "none");
+  sound.style.display = "none";
+  document.body.appendChild(sound);
+  const play = () => {
+    sound.currentTime = 0;
+    sound.play();
+  };
+  return { play };
+};
+
+const hoverOnBotGridEffect = (lst) => {
+  lst.forEach((cell) => {
+    cell.addEventListener("mouseenter", () => {
+      if (!cell.children.length && !cell.classList.contains("ship_placed4"))
+        cell.style.backgroundColor = "green";
+    });
+    cell.addEventListener("mouseleave", () => {
+      if (!cell.classList.contains("ship_placed4"))
+        cell.style.backgroundColor = "";
+    });
+  });
+};
+
+const animateHitOnShip = (ship_name, ship_owner, n) => {
+  if (!["player", "robot"].includes(ship_owner)) {
+    console.error("wrong player name");
+    return;
+  }
+  let ship_to_hit = document.querySelector(
+    `.${ship_owner}-ships div[ship='${ship_name}']`
+  );
+  console.log(ship_owner);
+  console.log(ship_name);
+  console.log(ship_to_hit.children[n - 1]);
+  ship_to_hit.children[n - 1].style.cssText =
+    "filter: invert(31%) sepia(53%) saturate(6071%) hue-rotate(0deg) brightness(86%) contrast(175%);";
+};
+
 module.exports = {
+  hoverOnBotGridEffect,
+  Sound,
+  sleep,
+  animateAttack,
   buildGrid,
   axisButtonListener,
   getAxis,
   cursorEntersCell,
   cursorLeavesCell,
   clickOnCell,
+  animateHitOnShip,
 };

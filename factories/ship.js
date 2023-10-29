@@ -9,6 +9,9 @@ const Ship = (_name, _length, _axis) => {
   const hit = () => {
     hits++;
   };
+  const getNumHits = () => {
+    return hits;
+  };
   const setShipLocation = (arr) => {
     shipLocation = arr;
   };
@@ -19,7 +22,16 @@ const Ship = (_name, _length, _axis) => {
     sunk = hits >= length;
     return sunk;
   };
-  return { name, axis, length, hit, isSunk, setShipLocation, getShipLocation };
+  return {
+    name,
+    axis,
+    length,
+    hit,
+    getNumHits,
+    isSunk,
+    setShipLocation,
+    getShipLocation,
+  };
 };
 
 module.exports = { Ship };
