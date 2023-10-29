@@ -188,7 +188,7 @@ eval("\n\n/* istanbul ignore next  */\nfunction styleTagTransform(css, styleElem
   \************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-eval("const GRID_SIZE = 10;\nconst { coordsToString, stringToCoords } = __webpack_require__(/*! ../factories/player */ \"./factories/player.js\");\nconst startingGame = new CustomEvent(\"startingGame\");\n\nconst buildGrid = (myGB, grid = null, show_ships = false) => {\n  if (myGB)\n    for (let i = 0; i < GRID_SIZE; i++) {\n      for (let j = 0; j < GRID_SIZE; j++) {\n        let div = document.createElement(\"div\");\n        div.classList.add(\"cell\");\n        div.setAttribute(\"coords\", `${j},${i}`);\n\n        if (grid) {\n          let val = grid[i][j];\n          div.setAttribute(\"value\", val);\n          div.setAttribute(\"empty\", \"\");\n          if (show_ships && val != 0) div.classList.add(\"ship_placed2\");\n        } else div.setAttribute(\"value\", \"0\");\n        myGB.append(div);\n      }\n    }\n};\nconst getAxis = (axis) => {\n  if (axis) return axis.innerText.toLowerCase();\n};\nconst axisButtonListener = (axisBtn, axis, game_ships) => {\n  if (axisBtn)\n    axisBtn.addEventListener(\"click\", () => {\n      axis.innerText == \"X\" ? (axis.innerText = \"Y\") : (axis.innerText = \"X\");\n      if (game_ships.length) game_ships[0].axis = getAxis(axis);\n    });\n};\nconst axis = document.getElementById(\"axis\");\nconst cursorEntersCell = (cell, me, game_ships) => {\n  cell.addEventListener(\"mouseenter\", function (event) {\n    if (game_ships.length) {\n      let ship = game_ships[0];\n      ship.axis = getAxis(axis);\n      const coords = stringToCoords(cell.getAttribute(\"coords\"));\n      let shipLocation = me.gameboard.isPlacingShipOk(ship, coords);\n      if (shipLocation) {\n        for (let c of shipLocation) {\n          let temp = document.querySelector(\n            `.cell[coords=\"${coordsToString(c)}\"]`\n          );\n          temp.classList.add(\"preview\");\n        }\n      } else {\n        cell.classList.add(\"not_allowed\");\n      }\n    }\n  });\n};\nconst cursorLeavesCell = (cell) => {\n  cell.addEventListener(\"mouseleave\", function (event) {\n    if (cell.classList.contains(\"preview\")) {\n      let preview_cells = document.querySelectorAll(\".preview\");\n      preview_cells.forEach((c) => {\n        c.classList.remove(\"preview\");\n      });\n    } else if (cell.classList.contains(\"not_allowed\")) {\n      if (!cell.classList.contains(\"ship_placed\")) {\n        cell.classList.remove(\"not_allowed\");\n      }\n    }\n  });\n};\nconst clickOnCell = (cell, me, game_ships, ship_name) => {\n  cell.addEventListener(\"click\", function (event) {\n    if (cell.classList.contains(\"preview\") && game_ships.length) {\n      let ship = game_ships.shift();\n      const coords = stringToCoords(cell.getAttribute(\"coords\"));\n      me.gameboard.placeShip(ship, coords);\n      me.addShip(ship);\n      let preview_cells = document.querySelectorAll(\".preview\");\n      preview_cells.forEach((c) => {\n        c.classList.remove(\"preview\");\n        c.classList.add(\"ship_placed\");\n        c.setAttribute(\"value\", ship.name);\n      });\n      if (game_ships.length) {\n        ship_name.innerText = game_ships[0].name;\n      } else {\n        let old_container = document.querySelector(\".place-ships-container\");\n        let container = document.querySelector(\".game-container\");\n        old_container.style.transition = \"opacity 2.2s\";\n        old_container.style.opacity = 0;\n        setTimeout(function () {\n          old_container.style.display = \"none\";\n          container.style.display = \"flex\";\n          document.dispatchEvent(startingGame);\n        }, 2000);\n      }\n    }\n  });\n};\n\nfunction sleep(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\nfunction animateAttack(result, cell) {\n  cell.removeAttribute(\"empty\");\n  let div = document.createElement(\"div\");\n  div.style.borderRadius = \"50%\";\n  if (result.hit) {\n    div.style.border = \"calc(var(--cell-size) / 5) solid red\";\n    cell.classList.add(\"ship_placed3\");\n  } else {\n    div.style.border = \"calc(var(--cell-size) / 5) solid white\";\n  }\n  cell.append(div);\n}\nconst Sound = (src) => {\n  let sound = document.createElement(\"audio\");\n  sound.src = src;\n  sound.setAttribute(\"preload\", \"auto\");\n  sound.setAttribute(\"controls\", \"none\");\n  sound.style.display = \"none\";\n  document.body.appendChild(sound);\n  const play = () => {\n    sound.currentTime = 0;\n    sound.play();\n  };\n  return { play };\n};\n\nconst hoverOnBotGridEffect = (lst) => {\n  lst.forEach((cell) => {\n    cell.addEventListener(\"mouseenter\", () => {\n      if (!cell.children.length && !cell.classList.contains(\"ship_placed4\"))\n        cell.style.backgroundColor = \"green\";\n    });\n    cell.addEventListener(\"mouseleave\", () => {\n      if (!cell.classList.contains(\"ship_placed4\"))\n        cell.style.backgroundColor = \"\";\n    });\n  });\n};\n\nconst animateHitOnShip = (ship_name, ship_owner, n) => {\n  if (![\"player\", \"robot\"].includes(ship_owner)) {\n    console.error(\"wrong player name\");\n    return;\n  }\n  let ship_to_hit = document.querySelector(\n    `.${ship_owner}-ships div[ship='${ship_name}']`\n  );\n  console.log(ship_owner);\n  console.log(ship_name);\n  console.log(ship_to_hit.children[n - 1]);\n  ship_to_hit.children[n - 1].style.cssText =\n    \"filter: invert(31%) sepia(53%) saturate(6071%) hue-rotate(0deg) brightness(86%) contrast(175%);\";\n};\n\nmodule.exports = {\n  hoverOnBotGridEffect,\n  Sound,\n  sleep,\n  animateAttack,\n  buildGrid,\n  axisButtonListener,\n  getAxis,\n  cursorEntersCell,\n  cursorLeavesCell,\n  clickOnCell,\n  animateHitOnShip,\n};\n\n\n//# sourceURL=webpack://battleship/./src/helpers.js?");
+eval("const GRID_SIZE = 10;\nconst { coordsToString, stringToCoords } = __webpack_require__(/*! ../factories/player */ \"./factories/player.js\");\nconst startingGame = new CustomEvent(\"startingGame\");\n\nconst Carrier_0 = __webpack_require__(/*! ../src/images/Battleship-0.png */ \"./src/images/Battleship-0.png\");\nconst Carrier_1 = __webpack_require__(/*! ../src/images/Battleship-1.png */ \"./src/images/Battleship-1.png\");\nconst Carrier_2 = __webpack_require__(/*! ../src/images/Battleship-2.png */ \"./src/images/Battleship-2.png\");\nconst Carrier_3 = __webpack_require__(/*! ../src/images/Battleship-3.png */ \"./src/images/Battleship-3.png\");\nconst Carrier_4 = __webpack_require__(/*! ../src/images/Battleship-4.png */ \"./src/images/Battleship-4.png\");\nconst Battleship_0 = __webpack_require__(/*! ../src/images/Carrier-0.png */ \"./src/images/Carrier-0.png\");\nconst Battleship_1 = __webpack_require__(/*! ../src/images/Carrier-1.png */ \"./src/images/Carrier-1.png\");\nconst Battleship_2 = __webpack_require__(/*! ../src/images/Carrier-2.png */ \"./src/images/Carrier-2.png\");\nconst Battleship_3 = __webpack_require__(/*! ../src/images/Carrier-3.png */ \"./src/images/Carrier-3.png\");\nconst Destroyer_0 = __webpack_require__(/*! ../src/images/Destroyer-0.png */ \"./src/images/Destroyer-0.png\");\nconst Destroyer_1 = __webpack_require__(/*! ../src/images/Destroyer-1.png */ \"./src/images/Destroyer-1.png\");\nconst Destroyer_2 = __webpack_require__(/*! ../src/images/Destroyer-2.png */ \"./src/images/Destroyer-2.png\");\nconst Submarine_0 = __webpack_require__(/*! ../src/images/Submarine-0.png */ \"./src/images/Submarine-0.png\");\nconst Submarine_1 = __webpack_require__(/*! ../src/images/Submarine-1.png */ \"./src/images/Submarine-1.png\");\nconst Submarine_2 = __webpack_require__(/*! ../src/images/Submarine-2.png */ \"./src/images/Submarine-2.png\");\nconst Patrol_Boat_0 = __webpack_require__(/*! ../src/images/Patrol_Boat-0.png */ \"./src/images/Patrol_Boat-0.png\");\nconst Patrol_Boat_1 = __webpack_require__(/*! ../src/images/Patrol_Boat-1.png */ \"./src/images/Patrol_Boat-1.png\");\nconst buildGrid = (myGB, grid = null, show_ships = false) => {\n  if (myGB)\n    for (let i = 0; i < GRID_SIZE; i++) {\n      for (let j = 0; j < GRID_SIZE; j++) {\n        let div = document.createElement(\"div\");\n        div.classList.add(\"cell\");\n        div.setAttribute(\"coords\", `${j},${i}`);\n\n        if (grid) {\n          let val = grid[i][j];\n          div.setAttribute(\"value\", val);\n          div.setAttribute(\"empty\", \"\");\n          if (show_ships && val != 0) div.classList.add(\"ship_placed2\");\n        } else div.setAttribute(\"value\", \"0\");\n        myGB.append(div);\n      }\n    }\n};\nconst getAxis = (axis) => {\n  if (axis) return axis.innerText.toLowerCase();\n};\nconst axisButtonListener = (axisBtn, axis, game_ships) => {\n  if (axisBtn)\n    axisBtn.addEventListener(\"click\", () => {\n      axis.innerText == \"X\" ? (axis.innerText = \"Y\") : (axis.innerText = \"X\");\n      if (game_ships.length) game_ships[0].axis = getAxis(axis);\n    });\n};\nconst axis = document.getElementById(\"axis\");\nconst cursorEntersCell = (cell, me, game_ships) => {\n  cell.addEventListener(\"mouseenter\", function (event) {\n    if (game_ships.length) {\n      let ship = game_ships[0];\n      ship.axis = getAxis(axis);\n      const coords = stringToCoords(cell.getAttribute(\"coords\"));\n      let shipLocation = me.gameboard.isPlacingShipOk(ship, coords);\n      if (shipLocation) {\n        for (let c of shipLocation) {\n          let temp = document.querySelector(\n            `.cell[coords=\"${coordsToString(c)}\"]`\n          );\n          temp.classList.add(\"preview\");\n        }\n      } else {\n        cell.classList.add(\"not_allowed\");\n      }\n    }\n  });\n};\nconst cursorLeavesCell = (cell) => {\n  cell.addEventListener(\"mouseleave\", function (event) {\n    if (cell.classList.contains(\"preview\")) {\n      let preview_cells = document.querySelectorAll(\".preview\");\n      preview_cells.forEach((c) => {\n        c.classList.remove(\"preview\");\n      });\n    } else if (cell.classList.contains(\"not_allowed\")) {\n      if (!cell.classList.contains(\"ship_placed\")) {\n        cell.classList.remove(\"not_allowed\");\n      }\n    }\n  });\n};\nconst clickOnCell = (cell, me, game_ships, ship_name) => {\n  cell.addEventListener(\"click\", function (event) {\n    if (cell.classList.contains(\"preview\") && game_ships.length) {\n      let ship = game_ships.shift();\n      const coords = stringToCoords(cell.getAttribute(\"coords\"));\n      me.gameboard.placeShip(ship, coords);\n      me.addShip(ship);\n      let preview_cells = document.querySelectorAll(\".preview\");\n      preview_cells.forEach((c) => {\n        c.classList.remove(\"preview\");\n        c.classList.add(\"ship_placed\");\n        c.setAttribute(\"value\", ship.name);\n      });\n      if (game_ships.length) {\n        ship_name.innerText = game_ships[0].name;\n      } else {\n        let old_container = document.querySelector(\".place-ships-container\");\n        let container = document.querySelector(\".game-container\");\n        old_container.style.transition = \"opacity 2.2s\";\n        old_container.style.opacity = 0;\n        setTimeout(function () {\n          old_container.style.display = \"none\";\n          container.style.display = \"flex\";\n          document.dispatchEvent(startingGame);\n        }, 2000);\n      }\n    }\n  });\n};\n\nfunction sleep(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\nfunction animateAttack(result, cell) {\n  cell.removeAttribute(\"empty\");\n  let div = document.createElement(\"div\");\n  div.style.borderRadius = \"50%\";\n  if (result.hit) {\n    div.style.border = \"calc(var(--cell-size) / 5) solid red\";\n    cell.classList.add(\"ship_placed3\");\n  } else {\n    div.style.border = \"calc(var(--cell-size) / 5) solid white\";\n  }\n  cell.append(div);\n}\nconst Sound = (src) => {\n  let sound = document.createElement(\"audio\");\n  sound.src = src;\n  sound.setAttribute(\"preload\", \"auto\");\n  sound.setAttribute(\"controls\", \"none\");\n  sound.style.display = \"none\";\n  document.body.appendChild(sound);\n  const play = () => {\n    sound.currentTime = 0;\n    sound.play();\n  };\n  return { play };\n};\n\nconst hoverOnBotGridEffect = (lst) => {\n  lst.forEach((cell) => {\n    cell.addEventListener(\"mouseenter\", () => {\n      if (!cell.children.length && !cell.classList.contains(\"ship_placed4\"))\n        cell.style.backgroundColor = \"green\";\n    });\n    cell.addEventListener(\"mouseleave\", () => {\n      if (!cell.classList.contains(\"ship_placed4\"))\n        cell.style.backgroundColor = \"\";\n    });\n  });\n};\n\nconst animateHitOnShip = (ship_name, ship_owner, n) => {\n  if (![\"player\", \"robot\"].includes(ship_owner)) {\n    console.error(\"wrong player name\");\n    return;\n  }\n  let ship_to_hit = document.querySelector(\n    `.${ship_owner}-ships div[ship='${ship_name}']`\n  );\n  console.log(ship_owner);\n  console.log(ship_name);\n  console.log(ship_to_hit.children[n - 1]);\n  ship_to_hit.children[n - 1].style.cssText =\n    \"filter: invert(31%) sepia(53%) saturate(6071%) hue-rotate(0deg) brightness(86%) contrast(175%);\";\n};\n\nconst addShipImages = () => {\n  let s1 = document.querySelectorAll('div[ship=\"Carrier\"]');\n  let s2 = document.querySelectorAll('div[ship=\"Battleship\"]');\n  let s3 = document.querySelectorAll('div[ship=\"Destroyer\"]');\n  let s4 = document.querySelectorAll('div[ship=\"Submarine\"]');\n  let s5 = document.querySelectorAll('div[ship=\"Patrol Boat\"]');\n\n  for (let e of s1) {\n    e.children[0].setAttribute(\"src\", Carrier_0);\n    e.children[1].setAttribute(\"src\", Carrier_1);\n    e.children[2].setAttribute(\"src\", Carrier_2);\n    e.children[3].setAttribute(\"src\", Carrier_3);\n    e.children[4].setAttribute(\"src\", Carrier_4);\n  }\n  for (let e of s2) {\n    e.children[0].setAttribute(\"src\", Battleship_0);\n    e.children[1].setAttribute(\"src\", Battleship_1);\n    e.children[2].setAttribute(\"src\", Battleship_2);\n    e.children[3].setAttribute(\"src\", Battleship_3);\n  }\n  for (let e of s3) {\n    e.children[0].setAttribute(\"src\", Destroyer_0);\n    e.children[1].setAttribute(\"src\", Destroyer_1);\n    e.children[2].setAttribute(\"src\", Destroyer_2);\n  }\n  for (let e of s4) {\n    e.children[0].setAttribute(\"src\", Submarine_0);\n    e.children[1].setAttribute(\"src\", Submarine_1);\n    e.children[2].setAttribute(\"src\", Submarine_2);\n  }\n  for (let e of s5) {\n    e.children[0].setAttribute(\"src\", Patrol_Boat_0);\n    e.children[1].setAttribute(\"src\", Patrol_Boat_1);\n  }\n};\n\nmodule.exports = {\n  addShipImages,\n  hoverOnBotGridEffect,\n  Sound,\n  sleep,\n  animateAttack,\n  buildGrid,\n  axisButtonListener,\n  getAxis,\n  cursorEntersCell,\n  cursorLeavesCell,\n  clickOnCell,\n  animateHitOnShip,\n};\n\n\n//# sourceURL=webpack://battleship/./src/helpers.js?");
 
 /***/ }),
 
@@ -199,7 +199,194 @@ eval("const GRID_SIZE = 10;\nconst { coordsToString, stringToCoords } = __webpac
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _audio_fall_mp3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./audio/fall.mp3 */ \"./src/audio/fall.mp3\");\n/* harmony import */ var _audio_explosion_mp3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./audio/explosion.mp3 */ \"./src/audio/explosion.mp3\");\n/* harmony import */ var _audio_cannonball_mp3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./audio/cannonball.mp3 */ \"./src/audio/cannonball.mp3\");\n/* harmony import */ var _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../factories/gameboard */ \"./factories/gameboard.js\");\n/* harmony import */ var _factories_gameboard__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_factories_gameboard__WEBPACK_IMPORTED_MODULE_3__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index.css */ \"./src/index.css\");\n\n\n\n\n\nconst { Ship } = __webpack_require__(/*! ../factories/ship */ \"./factories/ship.js\");\nconst {\n  Player,\n  coordsToString,\n  stringToCoords,\n} = __webpack_require__(/*! ../factories/player */ \"./factories/player.js\");\nconst {\n  hoverOnBotGridEffect,\n  Sound,\n  animateAttack,\n  sleep,\n  buildGrid,\n  axisButtonListener,\n  getAxis,\n  cursorEntersCell,\n  cursorLeavesCell,\n  clickOnCell,\n  animateHitOnShip,\n} = __webpack_require__(/*! ./helpers */ \"./src/helpers.js\");\n\nconst GRID_SIZE = 10;\nconst myGB = document.querySelector(\".gameboard.fill\");\nconst ship_name = document.getElementById(\"ship-name\");\nconst axisBtn = document.querySelector(\".place-ships-container button\");\nconst axis = document.getElementById(\"axis\");\nconst replay = document.querySelector(\".replay\");\nconst comment = document.querySelector(\".comment\");\nconst turn = document.querySelector(\".turn\");\n\nconst Carrier = Ship(\"Carrier\", 5, getAxis(axis));\nconst Battleship = Ship(\"Battleship\", 4, getAxis(axis));\nconst Destroyer = Ship(\"Destroyer\", 3, getAxis(axis));\nconst Submarine = Ship(\"Submarine\", 3, getAxis(axis));\nconst PatrolBoat = Ship(\"Patrol Boat\", 2, getAxis(axis));\nconst game_ships = [Carrier, Battleship, Destroyer, Submarine, PatrolBoat];\n\naxisButtonListener(axisBtn, axis, game_ships);\nbuildGrid(myGB);\nconst me = Player(false);\nconst bot = Player(true);\nbot.botPlaceShips();\n\nreplay.addEventListener(\"click\", () => {\n  location.reload();\n});\n\nconst placeShipOnGUI = (myGB, me) => {\n  ship_name.innerText = game_ships[0].name;\n  [...myGB.children].forEach((cell) => {\n    cursorEntersCell(cell, me, game_ships);\n    cursorLeavesCell(cell);\n    clickOnCell(cell, me, game_ships, ship_name);\n  });\n};\nplaceShipOnGUI(myGB, me);\n\nconst shot_sound = Sound(_audio_cannonball_mp3__WEBPACK_IMPORTED_MODULE_2__[\"default\"]);\nconst fall_sound = Sound(_audio_fall_mp3__WEBPACK_IMPORTED_MODULE_0__[\"default\"]);\nconst explosion_sound = Sound(_audio_explosion_mp3__WEBPACK_IMPORTED_MODULE_1__[\"default\"]);\n\ndocument.addEventListener(\"startingGame\", function () {\n  const player_board = document.querySelector(\".player-board\");\n  const robot_board = document.querySelector(\".robot-board\");\n  buildGrid(player_board, me.gameboard.grid, true);\n  buildGrid(robot_board, bot.gameboard.grid);\n\n  hoverOnBotGridEffect([...robot_board.children]);\n\n  let isPlayerTurn = true;\n  turn.innerHTML = \"It's your turn\";\n\n  robot_board.addEventListener(\"click\", async (e) => {\n    if (me.gameboard.isDefeated()) {\n      comment.innerHTML = \"BOT WIN\";\n      return;\n    }\n    if (bot.gameboard.isDefeated()) {\n      comment.innerHTML = \"YOU WIN\";\n      return;\n    }\n    if (isPlayerTurn) {\n      isPlayerTurn = false;\n      let cell = e.target;\n      cell.style.backgroundColor = \"\";\n\n      if (cell.getAttribute(\"empty\") == null) {\n        isPlayerTurn = true;\n        return;\n      }\n\n      let coords = stringToCoords(cell.getAttribute(\"coords\"));\n\n      let result = me.attack(bot.gameboard, bot, coords);\n      shot_sound.play();\n      await sleep(2000);\n      turn.innerHTML = \"It's the bot turn\";\n      animateAttack(result, cell);\n      if (result.hit) {\n        explosion_sound.play();\n        console.log(result);\n        animateHitOnShip(result.ship_name, \"robot\", result.hit_number);\n        let [x, y] = result.coords;\n        if (bot.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Casualties)\n          comment.innerHTML = `You Hit the bot's ${cell.getAttribute(\"value\")}`;\n        else if (bot.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Finished) {\n          let ship_name = cell.getAttribute(\"value\");\n          comment.innerHTML = `You Sunk the bot's ${ship_name}`;\n          let divs = document.querySelectorAll(\n            `.robot-board [value = \"${ship_name}\"]`\n          );\n          divs.forEach((div) => {\n            if (div.children.length) div.children[0].remove();\n            div.classList.add(\"ship_placed4\");\n          });\n        }\n        if (bot.gameboard.isDefeated()) {\n          comment.innerHTML = \"YOU WIN\";\n          turn.innerHTML = \"\";\n          return;\n        }\n      } else {\n        fall_sound.play();\n        comment.innerHTML = \"You missed\";\n      }\n\n      await sleep(1800);\n\n      result = bot.attack(me.gameboard, me);\n      cell = document.querySelector(\n        `.player-board .cell[coords='${coordsToString(result.coords)}']`\n      );\n      shot_sound.play();\n      await sleep(2000);\n      turn.innerHTML = \"It's your turn\";\n\n      animateAttack(result, cell);\n      if (result.hit) {\n        explosion_sound.play();\n        console.log(result);\n        animateHitOnShip(result.ship_name, \"player\", result.hit_number);\n        let [x, y] = result.coords;\n        if (me.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Casualties)\n          comment.innerHTML = `Bot Hit your ${cell.getAttribute(\"value\")}`;\n        else if (me.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Finished) {\n          let ship_name = cell.getAttribute(\"value\");\n          comment.innerHTML = `Bot Sunk your ${ship_name}`;\n          let divs = document.querySelectorAll(\n            `.player-board [value = \"${ship_name}\"]`\n          );\n          divs.forEach((div) => {\n            if (div.children.length) div.children[0].remove();\n            div.classList.add(\"ship_placed4\");\n          });\n        }\n        if (me.gameboard.isDefeated()) {\n          comment.innerHTML = \"Bot WIN\";\n          turn.innerHTML = \"\";\n          return;\n        }\n      } else {\n        comment.innerHTML = \"Bot missed\";\n        fall_sound.play();\n      }\n      isPlayerTurn = true;\n    }\n  });\n});\n\n/** \n * touchstart:  ==>> add preview of that cell  (mouseenter)\n   touchend:  ==>> add ship here in this cell      (click)\n   touchmove: ==>> remove the preview of that cell (mouseleave)\n*/\n\n/**                  ****\n *                  EFFECTS\n *\n */\n\n\n//# sourceURL=webpack://battleship/./src/index.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _audio_fall_mp3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./audio/fall.mp3 */ \"./src/audio/fall.mp3\");\n/* harmony import */ var _audio_explosion_mp3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./audio/explosion.mp3 */ \"./src/audio/explosion.mp3\");\n/* harmony import */ var _audio_cannonball_mp3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./audio/cannonball.mp3 */ \"./src/audio/cannonball.mp3\");\n/* harmony import */ var _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../factories/gameboard */ \"./factories/gameboard.js\");\n/* harmony import */ var _factories_gameboard__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_factories_gameboard__WEBPACK_IMPORTED_MODULE_3__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index.css */ \"./src/index.css\");\n\n\n\n\n\nconst { Ship } = __webpack_require__(/*! ../factories/ship */ \"./factories/ship.js\");\nconst {\n  Player,\n  coordsToString,\n  stringToCoords,\n} = __webpack_require__(/*! ../factories/player */ \"./factories/player.js\");\nconst {\n  addShipImages,\n  hoverOnBotGridEffect,\n  Sound,\n  animateAttack,\n  sleep,\n  buildGrid,\n  axisButtonListener,\n  getAxis,\n  cursorEntersCell,\n  cursorLeavesCell,\n  clickOnCell,\n  animateHitOnShip,\n} = __webpack_require__(/*! ./helpers */ \"./src/helpers.js\");\n\nconst GRID_SIZE = 10;\nconst myGB = document.querySelector(\".gameboard.fill\");\nconst ship_name = document.getElementById(\"ship-name\");\nconst axisBtn = document.querySelector(\".place-ships-container button\");\nconst axis = document.getElementById(\"axis\");\nconst replay = document.querySelector(\".replay\");\nconst comment = document.querySelector(\".comment\");\nconst turn = document.querySelector(\".turn\");\n\nconst Carrier = Ship(\"Carrier\", 5, getAxis(axis));\nconst Battleship = Ship(\"Battleship\", 4, getAxis(axis));\nconst Destroyer = Ship(\"Destroyer\", 3, getAxis(axis));\nconst Submarine = Ship(\"Submarine\", 3, getAxis(axis));\nconst PatrolBoat = Ship(\"Patrol Boat\", 2, getAxis(axis));\nconst game_ships = [Carrier, Battleship, Destroyer, Submarine, PatrolBoat];\n\naxisButtonListener(axisBtn, axis, game_ships);\nbuildGrid(myGB);\nconst me = Player(false);\nconst bot = Player(true);\nbot.botPlaceShips();\n\nreplay.addEventListener(\"click\", () => {\n  location.reload();\n});\n\nconst placeShipOnGUI = (myGB, me) => {\n  ship_name.innerText = game_ships[0].name;\n  [...myGB.children].forEach((cell) => {\n    cursorEntersCell(cell, me, game_ships);\n    cursorLeavesCell(cell);\n    clickOnCell(cell, me, game_ships, ship_name);\n  });\n};\nplaceShipOnGUI(myGB, me);\n\nconst shot_sound = Sound(_audio_cannonball_mp3__WEBPACK_IMPORTED_MODULE_2__[\"default\"]);\nconst fall_sound = Sound(_audio_fall_mp3__WEBPACK_IMPORTED_MODULE_0__[\"default\"]);\nconst explosion_sound = Sound(_audio_explosion_mp3__WEBPACK_IMPORTED_MODULE_1__[\"default\"]);\n\ndocument.addEventListener(\"startingGame\", function () {\n  const player_board = document.querySelector(\".player-board\");\n  const robot_board = document.querySelector(\".robot-board\");\n  buildGrid(player_board, me.gameboard.grid, true);\n  buildGrid(robot_board, bot.gameboard.grid);\n  addShipImages();\n  hoverOnBotGridEffect([...robot_board.children]);\n\n  let isPlayerTurn = true;\n  turn.innerHTML = \"It's your turn\";\n\n  robot_board.addEventListener(\"click\", async (e) => {\n    if (me.gameboard.isDefeated()) {\n      comment.innerHTML = \"BOT WIN\";\n      return;\n    }\n    if (bot.gameboard.isDefeated()) {\n      comment.innerHTML = \"YOU WIN\";\n      return;\n    }\n    if (isPlayerTurn) {\n      isPlayerTurn = false;\n      let cell = e.target;\n      cell.style.backgroundColor = \"\";\n\n      if (cell.getAttribute(\"empty\") == null) {\n        isPlayerTurn = true;\n        return;\n      }\n\n      let coords = stringToCoords(cell.getAttribute(\"coords\"));\n\n      let result = me.attack(bot.gameboard, bot, coords);\n      shot_sound.play();\n      await sleep(2000);\n      turn.innerHTML = \"It's the bot turn\";\n      animateAttack(result, cell);\n      if (result.hit) {\n        explosion_sound.play();\n        console.log(result);\n        animateHitOnShip(result.ship_name, \"robot\", result.hit_number);\n        let [x, y] = result.coords;\n        if (bot.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Casualties)\n          comment.innerHTML = `You Hit the bot's ${cell.getAttribute(\"value\")}`;\n        else if (bot.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Finished) {\n          let ship_name = cell.getAttribute(\"value\");\n          comment.innerHTML = `You Sunk the bot's ${ship_name}`;\n          let divs = document.querySelectorAll(\n            `.robot-board [value = \"${ship_name}\"]`\n          );\n          divs.forEach((div) => {\n            if (div.children.length) div.children[0].remove();\n            div.classList.add(\"ship_placed4\");\n          });\n        }\n        if (bot.gameboard.isDefeated()) {\n          comment.innerHTML = \"YOU WIN\";\n          turn.innerHTML = \"\";\n          return;\n        }\n      } else {\n        fall_sound.play();\n        comment.innerHTML = \"You missed\";\n      }\n\n      await sleep(1800);\n\n      result = bot.attack(me.gameboard, me);\n      cell = document.querySelector(\n        `.player-board .cell[coords='${coordsToString(result.coords)}']`\n      );\n      shot_sound.play();\n      await sleep(2000);\n      turn.innerHTML = \"It's your turn\";\n\n      animateAttack(result, cell);\n      if (result.hit) {\n        explosion_sound.play();\n        console.log(result);\n        animateHitOnShip(result.ship_name, \"player\", result.hit_number);\n        let [x, y] = result.coords;\n        if (me.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Casualties)\n          comment.innerHTML = `Bot Hit your ${cell.getAttribute(\"value\")}`;\n        else if (me.gameboard.grid[y][x] == _factories_gameboard__WEBPACK_IMPORTED_MODULE_3__.Enemy_Finished) {\n          let ship_name = cell.getAttribute(\"value\");\n          comment.innerHTML = `Bot Sunk your ${ship_name}`;\n          let divs = document.querySelectorAll(\n            `.player-board [value = \"${ship_name}\"]`\n          );\n          divs.forEach((div) => {\n            if (div.children.length) div.children[0].remove();\n            div.classList.add(\"ship_placed4\");\n          });\n        }\n        if (me.gameboard.isDefeated()) {\n          comment.innerHTML = \"Bot WIN\";\n          turn.innerHTML = \"\";\n          return;\n        }\n      } else {\n        comment.innerHTML = \"Bot missed\";\n        fall_sound.play();\n      }\n      isPlayerTurn = true;\n    }\n  });\n});\n\n/** \n * touchstart:  ==>> add preview of that cell  (mouseenter)\n   touchend:  ==>> add ship here in this cell      (click)\n   touchmove: ==>> remove the preview of that cell (mouseleave)\n*/\n\n/**                  ****\n *                  EFFECTS\n *\n */\n\n\n//# sourceURL=webpack://battleship/./src/index.js?");
+
+/***/ }),
+
+/***/ "./src/images/Battleship-0.png":
+/*!*************************************!*\
+  !*** ./src/images/Battleship-0.png ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"9e9d32edef65db50e24c.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Battleship-0.png?");
+
+/***/ }),
+
+/***/ "./src/images/Battleship-1.png":
+/*!*************************************!*\
+  !*** ./src/images/Battleship-1.png ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"f471fa2ef3dcec080ac3.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Battleship-1.png?");
+
+/***/ }),
+
+/***/ "./src/images/Battleship-2.png":
+/*!*************************************!*\
+  !*** ./src/images/Battleship-2.png ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"84ebd0d831a590b9d15a.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Battleship-2.png?");
+
+/***/ }),
+
+/***/ "./src/images/Battleship-3.png":
+/*!*************************************!*\
+  !*** ./src/images/Battleship-3.png ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"a429c9af6623ca4915e4.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Battleship-3.png?");
+
+/***/ }),
+
+/***/ "./src/images/Battleship-4.png":
+/*!*************************************!*\
+  !*** ./src/images/Battleship-4.png ***!
+  \*************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"c921c81b67759f86effa.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Battleship-4.png?");
+
+/***/ }),
+
+/***/ "./src/images/Carrier-0.png":
+/*!**********************************!*\
+  !*** ./src/images/Carrier-0.png ***!
+  \**********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"eee08a5b1ddb53c172d8.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Carrier-0.png?");
+
+/***/ }),
+
+/***/ "./src/images/Carrier-1.png":
+/*!**********************************!*\
+  !*** ./src/images/Carrier-1.png ***!
+  \**********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"a10e76e30d0902aaa800.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Carrier-1.png?");
+
+/***/ }),
+
+/***/ "./src/images/Carrier-2.png":
+/*!**********************************!*\
+  !*** ./src/images/Carrier-2.png ***!
+  \**********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"5fde20e2103890e13a8d.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Carrier-2.png?");
+
+/***/ }),
+
+/***/ "./src/images/Carrier-3.png":
+/*!**********************************!*\
+  !*** ./src/images/Carrier-3.png ***!
+  \**********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"230b28430fa6d6194dec.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Carrier-3.png?");
+
+/***/ }),
+
+/***/ "./src/images/Destroyer-0.png":
+/*!************************************!*\
+  !*** ./src/images/Destroyer-0.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"d156db3a5927ed0457d3.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Destroyer-0.png?");
+
+/***/ }),
+
+/***/ "./src/images/Destroyer-1.png":
+/*!************************************!*\
+  !*** ./src/images/Destroyer-1.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"f13855ebba67af75db14.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Destroyer-1.png?");
+
+/***/ }),
+
+/***/ "./src/images/Destroyer-2.png":
+/*!************************************!*\
+  !*** ./src/images/Destroyer-2.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"5f71ece6ee77941ef841.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Destroyer-2.png?");
+
+/***/ }),
+
+/***/ "./src/images/Patrol_Boat-0.png":
+/*!**************************************!*\
+  !*** ./src/images/Patrol_Boat-0.png ***!
+  \**************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"fdee7838cc75ba3e6103.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Patrol_Boat-0.png?");
+
+/***/ }),
+
+/***/ "./src/images/Patrol_Boat-1.png":
+/*!**************************************!*\
+  !*** ./src/images/Patrol_Boat-1.png ***!
+  \**************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"92bc4c4658361df1df14.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Patrol_Boat-1.png?");
+
+/***/ }),
+
+/***/ "./src/images/Submarine-0.png":
+/*!************************************!*\
+  !*** ./src/images/Submarine-0.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"cac6cfd2106d615a1408.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Submarine-0.png?");
+
+/***/ }),
+
+/***/ "./src/images/Submarine-1.png":
+/*!************************************!*\
+  !*** ./src/images/Submarine-1.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"9149c5cc7505041bbbb8.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Submarine-1.png?");
+
+/***/ }),
+
+/***/ "./src/images/Submarine-2.png":
+/*!************************************!*\
+  !*** ./src/images/Submarine-2.png ***!
+  \************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+eval("module.exports = __webpack_require__.p + \"d01694a626a407b6b5a0.png\";\n\n//# sourceURL=webpack://battleship/./src/images/Submarine-2.png?");
 
 /***/ })
 
